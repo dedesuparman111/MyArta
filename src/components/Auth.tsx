@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AppUser } from '../types';
-import { apiService, isSupabaseConfigured } from '../lib/supabase';
+import { apiService } from '../lib/supabase';
 import { ArrowRight, User, KeyRound, Mail, Eye, EyeOff, ShieldAlert } from 'lucide-react';
 
 interface AuthProps {
@@ -88,9 +88,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             ArtaQu Financials
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 font-medium">
-            {isSupabaseConfigured() 
-              ? 'Sinkronisasikan catatan keuangan Anda dengan aman di awan.'
-              : 'Kelola catatan keuangan personal Anda dengan profesional.'}
+            Kelola dan sinkronisasikan catatan keuangan Anda dengan aman.
           </p>
         </div>
 
@@ -114,16 +112,16 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
           {/* Email */}
           <div>
             <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
-              {isSupabaseConfigured() ? 'Alamat Email' : 'Email (atau admin untuk Demo)'}
+              Alamat Email
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
-                type={isSupabaseConfigured() && isSignUp ? "email" : "text"}
+                type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={isSupabaseConfigured() ? 'contoh: nama@email.com' : 'contoh: admin'}
+                placeholder="contoh: nama@email.com"
                 className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm dark:bg-slate-950 dark:text-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
@@ -154,7 +152,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
             <div>
               <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide flex justify-between">
                 <span>Password</span>
-                {isSupabaseConfigured() && !isSignUp && (
+                {(!isSignUp) && (
                   <button type="button" onClick={() => { setIsForgotPassword(true); setError(null); setInfoMessage(null); }} className="text-primary hover:underline text-[10px] capitalize">Lupa Password?</button>
                 )}
               </label>
@@ -165,7 +163,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={isSignUp ? 'Min. 6 Karakter' : 'contoh: admin123'}
+                  placeholder={isSignUp ? 'Min. 6 Karakter' : 'contoh: rahasia123'}
                   className="w-full pl-10 pr-10 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm dark:bg-slate-950 dark:text-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary font-semibold"
                 />
                 <button
@@ -195,16 +193,8 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
           </button>
         </form>
 
-        {/* Demo Mode Guide */}
-        {!isSupabaseConfigured() && !isSignUp && !isForgotPassword && (
-          <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 text-center font-medium">
-            💡 Gunakan email <strong>admin</strong> dan password <strong>admin123</strong> untuk mencoba mode demo.
-          </div>
-        )}
-
         {/* Toggles */}
-        {isSupabaseConfigured() && (
-          <div className="mt-6 text-center text-xs flex flex-col gap-2">
+        <div className="mt-6 text-center text-xs flex flex-col gap-2">
             {isForgotPassword ? (
               <button
                 type="button"
@@ -230,8 +220,7 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
                 {isSignUp ? 'Sudah memiliki akun? Masuk' : 'Belum memiliki akun? Daftar Baru'}
               </button>
             )}
-          </div>
-        )}
+        </div>
 
       </div>
     </div>

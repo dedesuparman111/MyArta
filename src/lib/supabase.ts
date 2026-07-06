@@ -38,59 +38,9 @@ export const supabase = supabaseClient;
 // ==========================================
 // LOCAL STORAGE FALLBACK SEED DATA
 // ==========================================
-const DEFAULT_TRANSACTIONS: Transaction[] = [
-  {
-    id: 'trx-1',
-    date: '2026-07-01',
-    type: 'Pendapatan',
-    category: 'Gaji Bulanan',
-    amount: 8500000,
-    description: 'Transfer Gaji Pokok PT Maju Bersama',
-  },
-  {
-    id: 'trx-2',
-    date: '2026-07-01',
-    type: 'Pengeluaran',
-    category: 'Makanan & Minuman',
-    amount: 150000,
-    description: 'Makan malam bersama keluarga',
-  },
-  {
-    id: 'trx-3',
-    date: '2026-07-02',
-    type: 'Piutang',
-    category: 'Pinjaman Teman',
-    amount: 500000,
-    description: 'Pinjaman ke Budi (janji bayar akhir bulan)',
-  },
-];
+const DEFAULT_TRANSACTIONS: Transaction[] = [];
 
-const DEFAULT_INSTALLMENTS: Installment[] = [
-  {
-    id: 'inst-1',
-    name: 'Cicilan Laptop Kerja',
-    creditor: 'Adira Finance',
-    total_amount: 12000000,
-    paid_amount: 4000000,
-    remaining: 8000000,
-    start_date: '2026-01-10',
-    due_date: '2026-12-10',
-    description: 'Laptop Asus ROG untuk coding dan desain',
-    status: 'Berjalan',
-  },
-  {
-    id: 'inst-2',
-    name: 'Cicilan Sepeda Motor',
-    creditor: 'FIF Group',
-    total_amount: 24000000,
-    paid_amount: 24000000,
-    remaining: 0,
-    start_date: '2025-01-05',
-    due_date: '2026-01-05',
-    description: 'Motor Honda Vario 160cc',
-    status: 'Lunas',
-  },
-];
+const DEFAULT_INSTALLMENTS: Installment[] = [];
 
 const DEFAULT_SAVINGS_GOALS: SavingsGoal[] = [];
 
@@ -240,12 +190,6 @@ export const apiService = {
   },
 
   async signIn(email: string, password?: string): Promise<{ success: boolean; user: AppUser | null; message: string }> {
-    if (email.trim() === 'admin' && password === 'admin123') {
-      const mockUser: AppUser = { id: 'usr-admin', username: 'Admin' };
-      localStorage.setItem('ArtaQu_user', JSON.stringify(mockUser));
-      return { success: true, user: mockUser, message: 'Berhasil masuk (Demo Mode).' };
-    }
-
     if (supabase && password) {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -271,9 +215,23 @@ export const apiService = {
         }
         return { success: false, user: null, message: e.message || 'Gagal masuk.' };
       }
+    } else {
+      // Local fallback for signIn
+      const localUsersStr = localStorage.getItem('ArtaQu_local_users');
+      if (localUsersStr) {
+        try {
+          const users = JSON.parse(localUsersStr);
+          const user = users.find((u: any) => u.email === email && u.password === password);
+          if (user) {
+            const appUser: AppUser = { id: user.id, username: user.username, email: user.email };
+            localStorage.setItem('ArtaQu_user', JSON.stringify(appUser));
+            return { success: true, user: appUser, message: 'Berhasil masuk (Mode Offline).' };
+          }
+        } catch (e) {}
+      }
     }
 
-    return { success: false, user: null, message: 'Email atau Password salah! (Gunakan admin/admin123 untuk Demo)' };
+    return { success: false, user: null, message: 'Email atau Password salah!' };
   },
 
   async signUp(username: string, email: string, password?: string): Promise<{ success: boolean; user: AppUser | null; message: string }> {
@@ -304,9 +262,23 @@ export const apiService = {
       } catch (e: any) {
         return { success: false, user: null, message: e.message || 'Gagal mendaftar.' };
       }
+    } else if (password) {
+      // Local fallback for signUp
+      const localUsersStr = localStorage.getItem('ArtaQu_local_users');
+      const users = localUsersStr ? JSON.parse(localUsersStr) : [];
+      if (users.find((u: any) => u.email === email)) {
+        return { success: false, user: null, message: 'Email sudah terdaftar.' };
+      }
+      const newUser = { id: uuidv4(), username, email, password };
+      users.push(newUser);
+      localStorage.setItem('ArtaQu_local_users', JSON.stringify(users));
+      
+      const appUser: AppUser = { id: newUser.id, username, email };
+      localStorage.setItem('ArtaQu_user', JSON.stringify(appUser));
+      return { success: true, user: appUser, message: 'Pendaftaran berhasil (Mode Offline)!' };
     }
 
-    return { success: false, user: null, message: 'Pendaftaran hanya tersedia apabila Supabase sudah terkonfigurasi.' };
+    return { success: false, user: null, message: 'Pendaftaran membutuhkan password.' };
   },
 
   async resetPassword(email: string): Promise<{ success: boolean; message: string }> {

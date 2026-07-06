@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { AppUser, Transaction, Installment, DashboardData, SavingsGoal } from './types';
-import { apiService, isSupabaseConfigured } from './lib/supabase';
+import { apiService } from './lib/supabase';
 import { Dashboard } from './components/Dashboard';
 import { Savings } from './components/Savings';
 import { Transactions } from './components/Transactions';
