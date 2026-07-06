@@ -727,7 +727,7 @@ export default function App() {
           {/* Target */}
           <button
             onClick={() => setActiveView('savings')}
-            className={`hidden sm:flex flex-col items-center justify-center flex-1 h-full transition-all ${
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
               activeView === 'savings' 
                 ? 'text-[var(--primary-color)]' 
                 : 'text-slate-400 dark:text-slate-500 hover:text-[var(--primary-color)]'
