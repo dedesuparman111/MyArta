@@ -151,6 +151,14 @@ if (typeof window !== 'undefined') {
 // UNIFIED DATA SERVICE
 // ==========================================
 
+// Helper to hash password for offline storage
+async function hashPassword(password: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 export const apiService = {
   // --- AUTHENTICATION ---
   async getCurrentUser(): Promise<AppUser | null> {
@@ -172,7 +180,7 @@ export const apiService = {
         }
       } catch (e: any) {
         if (e.message !== 'Auth session missing!') {
-          console.error('Error getting Supabase user:', e);
+          if(e.message && !e.message.includes('Failed to fetch')) { console.error('Error getting Supabase user:', e); }
         }
       }
     }
@@ -215,13 +223,14 @@ export const apiService = {
         }
         return { success: false, user: null, message: e.message || 'Gagal masuk.' };
       }
-    } else {
+    } else if (password) {
       // Local fallback for signIn
       const localUsersStr = localStorage.getItem('ArtaQu_local_users');
       if (localUsersStr) {
         try {
           const users = JSON.parse(localUsersStr);
-          const user = users.find((u: any) => u.email === email && u.password === password);
+          const hashedPassword = await hashPassword(password);
+          const user = users.find((u: any) => u.email === email && u.password === hashedPassword);
           if (user) {
             const appUser: AppUser = { id: user.id, username: user.username, email: user.email };
             localStorage.setItem('ArtaQu_user', JSON.stringify(appUser));
@@ -270,7 +279,9 @@ export const apiService = {
       if (users.find((u: any) => u.email === email)) {
         return { success: false, user: null, message: 'Email sudah terdaftar.' };
       }
-      const newUser = { id: uuidv4(), username, email, password };
+      
+      const hashedPassword = await hashPassword(password);
+      const newUser = { id: uuidv4(), username, email, password: hashedPassword };
       users.push(newUser);
       localStorage.setItem('ArtaQu_local_users', JSON.stringify(users));
       
@@ -320,7 +331,7 @@ export const apiService = {
           return data as Transaction[];
         }
       } catch (e) {
-        console.error('Error fetching transactions from Supabase:', e);
+        if(e.message && !e.message.includes('Failed to fetch')) { console.error('Error fetching transactions from Supabase:', e); }
       }
     }
 
@@ -408,7 +419,7 @@ export const apiService = {
           return formattedData;
         }
       } catch (e) {
-        console.error('Error fetching installments from Supabase:', e);
+        if(e.message && !e.message.includes('Failed to fetch')) { console.error('Error fetching installments from Supabase:', e); }
       }
     }
 
@@ -511,7 +522,7 @@ export const apiService = {
           return data as SavingsGoal[];
         }
       } catch (e) {
-        console.error('Error fetching savings goals:', e);
+        if(e.message && !e.message.includes('Failed to fetch')) { console.error('Error fetching savings goals:', e); }
       }
     }
     return getLocalData<SavingsGoal[]>('ArtaQu_savings', DEFAULT_SAVINGS_GOALS);
