@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { AppUser, Transaction, Installment, DashboardData, SavingsGoal } from './types';
-import { apiService } from './lib/supabase';
+import { apiService, supabase } from './lib/supabase';
 import { Dashboard } from './components/Dashboard';
 import { Savings } from './components/Savings';
 import { Transactions } from './components/Transactions';
@@ -156,6 +156,17 @@ export default function App() {
         if (currentUser) {
           setUser(currentUser);
           await loadCoreData();
+
+          // Handle URL hashes for email verification & password recovery
+          const hash = window.location.hash;
+          if (hash && hash.includes('type=signup')) {
+            showToast('Verifikasi Berhasil', 'Email Anda telah berhasil diverifikasi!', 'success');
+            window.history.replaceState(null, '', window.location.pathname);
+          } else if (hash && hash.includes('type=recovery')) {
+            showToast('Reset Password', 'Silakan ubah password Anda di menu Pengaturan.', 'success');
+            setActiveView('settings'); // Navigate directly to settings
+            window.history.replaceState(null, '', window.location.pathname);
+          }
         }
       } catch (e: any) {
         showToast('Kesalahan Sesi', 'Gagal memulihkan sesi pengguna.', 'error');
@@ -164,7 +175,26 @@ export default function App() {
       }
     };
     initApp();
-  }, [user?.id]);
+
+    if (supabase) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === 'SIGNED_IN' && session) {
+            const currentUser = await apiService.getCurrentUser();
+            if (currentUser && !user) {
+              setUser(currentUser);
+              await loadCoreData();
+            }
+          } else if (event === 'SIGNED_OUT') {
+            setUser(null);
+          }
+        }
+      );
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, []);
 
   // Effect: PWA Install Prompt
   useEffect(() => {

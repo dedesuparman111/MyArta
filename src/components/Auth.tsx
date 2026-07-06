@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { AppUser } from '../types';
 import { apiService } from '../lib/supabase';
-import { ArrowRight, User, KeyRound, Mail, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { ArrowRight, User, KeyRound, Mail, Eye, EyeOff, ShieldAlert, MailCheck } from 'lucide-react';
 
 interface AuthProps {
   onAuthSuccess: (user: AppUser) => void;
@@ -101,8 +101,12 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
         )}
         
         {infoMessage && (
-          <div className="mb-5 p-3.5 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-bold border border-emerald-100 dark:border-emerald-900/30">
-            {infoMessage}
+          <div className="mb-5 p-4 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 rounded-xl text-sm font-medium border border-emerald-200 dark:border-emerald-800 flex items-start gap-3 shadow-sm animate-fade-in">
+            <MailCheck className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-bold mb-1">{infoMessage.includes('Cek email') ? 'Periksa Kotak Masuk Anda' : 'Berhasil'}</h3>
+              <p className="text-emerald-600 dark:text-emerald-400 text-xs leading-relaxed">{infoMessage}</p>
+            </div>
           </div>
         )}
 

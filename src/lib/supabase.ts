@@ -242,6 +242,7 @@ export const apiService = {
           password: password,
           options: {
             data: { username },
+            emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
