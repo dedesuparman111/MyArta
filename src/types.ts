@@ -45,6 +45,19 @@ export interface DashboardData {
   debt: number;
   receivable: number;
   installmentOutstanding: number;
+  totalAssetValue: number;
+}
+
+export interface Asset {
+  id: string;
+  created_at?: string;
+  user_id?: string;
+  name: string;
+  type: 'Kripto' | 'Saham' | 'Reksadana' | 'Emas' | 'Lainnya';
+  platform: string;
+  quantity: number;
+  average_price: number;
+  current_price: number;
 }
 
 export interface SavingsGoal {

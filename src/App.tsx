@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { AppUser, Transaction, Installment, DashboardData, SavingsGoal } from './types';
+import { AppUser, Transaction, Installment, DashboardData, SavingsGoal, Asset } from './types';
 import { apiService, supabase } from './lib/supabase';
 import { Dashboard } from './components/Dashboard';
 import { Savings } from './components/Savings';
@@ -12,7 +12,8 @@ import { Transactions } from './components/Transactions';
 import { Installments } from './components/Installments';
 import { Settings } from './components/Settings';
 import { Auth } from './components/Auth';
-import { Layers, Wallet, CreditCard, Settings as SettingsIcon, LogOut, RefreshCw, CheckCircle, AlertCircle, Terminal, Plus, Home, ArrowRightLeft, User, LayoutGrid, ReceiptText, Settings2, Target } from 'lucide-react';
+import { Assets } from './components/Assets';
+import { Layers, Wallet, CreditCard, Settings as SettingsIcon, LogOut, RefreshCw, CheckCircle, AlertCircle, Terminal, Plus, Home, ArrowRightLeft, User, LayoutGrid, ReceiptText, Settings2, Target, Briefcase } from 'lucide-react';
 
 interface Toast {
   id: string;
@@ -24,7 +25,7 @@ interface Toast {
 export default function App() {
   // Session & Navigation State
   const [user, setUser] = useState<AppUser | null>(null);
-  const [activeView, setActiveView] = useState<'dashboard' | 'transactions' | 'installments' | 'savings' | 'settings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'transactions' | 'installments' | 'savings' | 'assets' | 'settings'>('dashboard');
   const [showGlobalAdd, setShowGlobalAdd] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +37,7 @@ export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     balance: 0,
     income: 0,
@@ -43,6 +45,7 @@ export default function App() {
     debt: 0,
     receivable: 0,
     installmentOutstanding: 0,
+    totalAssetValue: 0,
   });
 
   // UI Customization State
@@ -133,16 +136,18 @@ export default function App() {
   // Load all user records from database
   const loadCoreData = async () => {
     try {
-      const [trxs, insts, dash, goals] = await Promise.all([
+      const [trxs, insts, dash, goals, asts] = await Promise.all([
         apiService.getTransactions(),
         apiService.getInstallments(),
         apiService.getDashboardData(),
         apiService.getSavingsGoals(),
+        apiService.getAssets(),
       ]);
       setTransactions(trxs);
       setInstallments(insts);
       setDashboardData(dash);
       setSavingsGoals(goals);
+      setAssets(asts);
     } catch (e: any) {
       showToast('Koneksi Gagal', e.message || 'Gagal menyinkronkan data keuangan.', 'error');
     }
@@ -373,6 +378,40 @@ export default function App() {
     return true; // add return
   };
 
+  const handleAddAsset = async (asset: Omit<Asset, 'id'>) => {
+    const res = await apiService.addAsset(asset);
+    if (res.success) {
+      await loadCoreData();
+      return true;
+    } else {
+      showToast('Gagal', res.message || 'Gagal menambahkan aset.', 'error');
+      return false;
+    }
+  };
+
+  const handleUpdateAsset = async (id: string, updates: Partial<Asset>) => {
+    const res = await apiService.updateAsset(id, updates);
+    if (res.success) {
+      await loadCoreData();
+      return true;
+    } else {
+      showToast('Gagal', res.message || 'Gagal memperbarui aset.', 'error');
+      return false;
+    }
+  };
+
+  const handleDeleteAsset = async (id: string) => {
+    if (window.confirm('Yakin ingin menghapus aset ini?')) {
+      const res = await apiService.deleteAsset(id);
+      if (res.success) {
+        await loadCoreData();
+      } else {
+        showToast('Gagal', res.message || 'Gagal menghapus aset.', 'error');
+      }
+    }
+    return true;
+  };
+
   const handleResetData = async () => {
     try {
       const res = await apiService.resetDatabase();
@@ -482,6 +521,8 @@ export default function App() {
               { id: 'dashboard', label: 'Dashboard', icon: <Layers className="w-4 h-4" /> },
               { id: 'transactions', label: 'Transaksi', icon: <Wallet className="w-4 h-4" /> },
               { id: 'installments', label: 'Cicilan',  icon: <CreditCard className="w-4 h-4" /> },
+              { id: 'savings', label: 'Target',  icon: <Target className="w-4 h-4" /> },
+              { id: 'assets', label: 'Aset Digital',  icon: <Briefcase className="w-4 h-4" /> },
               { id: 'settings',     label: 'Pengaturan', icon: <SettingsIcon className="w-4 h-4" /> },
             ].map((tab) => (
               <button
@@ -572,6 +613,16 @@ export default function App() {
               onAddGoal={handleAddSavingsGoal}
               onUpdateGoal={handleUpdateSavingsGoal}
               onDeleteGoal={handleDeleteSavingsGoal}
+            />
+          )}
+
+          {activeView === 'assets' && (
+            <Assets
+              assets={assets}
+              formatRupiah={formatRupiah}
+              onAddAsset={handleAddAsset}
+              onUpdateAsset={handleUpdateAsset}
+              onDeleteAsset={handleDeleteAsset}
             />
           )}
 
@@ -676,7 +727,7 @@ export default function App() {
           {/* Target */}
           <button
             onClick={() => setActiveView('savings')}
-            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
+            className={`hidden sm:flex flex-col items-center justify-center flex-1 h-full transition-all ${
               activeView === 'savings' 
                 ? 'text-[var(--primary-color)]' 
                 : 'text-slate-400 dark:text-slate-500 hover:text-[var(--primary-color)]'
@@ -687,6 +738,23 @@ export default function App() {
             </div>
             <span className={`text-[9px] font-semibold transition-all duration-300 ${activeView === 'savings' ? 'opacity-100' : 'opacity-0 translate-y-2 absolute bottom-2'}`}>
               Target
+            </span>
+          </button>
+          
+          {/* Aset */}
+          <button
+            onClick={() => setActiveView('assets')}
+            className={`flex flex-col items-center justify-center flex-1 h-full transition-all ${
+              activeView === 'assets' 
+                ? 'text-[var(--primary-color)]' 
+                : 'text-slate-400 dark:text-slate-500 hover:text-[var(--primary-color)]'
+            }`}
+          >
+            <div className={`transition-all duration-300 ${activeView === 'assets' ? '-translate-y-1' : ''}`}>
+              <Briefcase className={`w-[24px] h-[24px] mb-1 ${activeView === 'assets' ? 'fill-current opacity-20' : ''}`} strokeWidth={activeView === 'assets' ? 2.5 : 2} />
+            </div>
+            <span className={`text-[9px] font-semibold transition-all duration-300 ${activeView === 'assets' ? 'opacity-100' : 'opacity-0 translate-y-2 absolute bottom-2'}`}>
+              Aset
             </span>
           </button>
 

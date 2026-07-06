@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import { Transaction, Installment, DashboardData, AppUser, SavingsGoal } from '../types';
+import { Transaction, Installment, DashboardData, AppUser, SavingsGoal, Asset } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Read configuration from Vite environment variables
@@ -43,6 +43,8 @@ const DEFAULT_TRANSACTIONS: Transaction[] = [];
 const DEFAULT_INSTALLMENTS: Installment[] = [];
 
 const DEFAULT_SAVINGS_GOALS: SavingsGoal[] = [];
+
+const DEFAULT_ASSETS: Asset[] = [];
 
 // Helper to get local data safely
 const getLocalData = <T>(key: string, defaultData: T): T => {
@@ -588,15 +590,117 @@ export const apiService = {
     return { success: true };
   },
 
+  // --- ASSETS ---
+  async getAssets(): Promise<Asset[]> {
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        await processSyncQueue();
+        const queue = getSyncQueue();
+        if (queue.length === 0) {
+          const { data, error } = await supabase
+            .from('assets')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (error) throw error;
+          if (data) {
+            setLocalData('ArtaQu_assets', data);
+            return data as Asset[];
+          }
+        }
+      } catch (e: any) {
+        if(e.message && !e.message.includes('Failed to fetch')) { console.error('Error fetching assets:', e); }
+      }
+    }
+    return getLocalData<Asset[]>('ArtaQu_assets', DEFAULT_ASSETS);
+  },
+
+  async addAsset(asset: Omit<Asset, 'id'>): Promise<{ success: boolean; data?: Asset; message?: string }> {
+    const newId = uuidv4();
+    const user = await this.getCurrentUser();
+    const newAsset: Asset = { ...asset, id: newId, user_id: user?.id, created_at: new Date().toISOString() };
+
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { data, error } = await supabase.from('assets').insert([newAsset]).select();
+        if (error) throw error;
+        
+        const localAssets = getLocalData<Asset[]>('ArtaQu_assets', DEFAULT_ASSETS);
+        setLocalData('ArtaQu_assets', [data[0] as Asset, ...localAssets]);
+        
+        return { success: true, data: data[0] as Asset, message: 'Aset berhasil ditambahkan.' };
+      } catch (e: any) {
+        return { success: false, message: e.message || 'Gagal menambahkan aset.' };
+      }
+    }
+
+    // Offline mode
+    enqueueSync({ type: 'ADD_ASSET', payload: newAsset }); processSyncQueue();
+    const localAssets = getLocalData<Asset[]>('ArtaQu_assets', DEFAULT_ASSETS);
+    setLocalData('ArtaQu_assets', [newAsset, ...localAssets]);
+    return { success: true, data: newAsset, message: 'Aset disimpan offline.' };
+  },
+
+  async updateAsset(id: string, updates: Partial<Asset>): Promise<{ success: boolean; data?: Asset; message?: string }> {
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { data, error } = await supabase.from('assets').update(updates).eq('id', id).select();
+        if (error) throw error;
+        
+        const localAssets = getLocalData<Asset[]>('ArtaQu_assets', DEFAULT_ASSETS);
+        setLocalData('ArtaQu_assets', localAssets.map(a => a.id === id ? data[0] as Asset : a));
+        
+        return { success: true, data: data[0] as Asset, message: 'Aset diperbarui.' };
+      } catch (e: any) {
+        return { success: false, message: e.message || 'Gagal memperbarui aset.' };
+      }
+    }
+    
+    enqueueSync({ type: 'UPDATE_ASSET', payload: { id, updates } }); processSyncQueue();
+    const localAssets = getLocalData<Asset[]>('ArtaQu_assets', DEFAULT_ASSETS);
+    let updatedAsset: Asset | undefined;
+    const newAssets = localAssets.map(a => {
+      if (a.id === id) {
+        updatedAsset = { ...a, ...updates };
+        return updatedAsset;
+      }
+      return a;
+    });
+    setLocalData('ArtaQu_assets', newAssets);
+    return { success: true, data: updatedAsset, message: 'Aset diperbarui offline.' };
+  },
+
+  async deleteAsset(id: string): Promise<{ success: boolean; message?: string }> {
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { error } = await supabase.from('assets').delete().eq('id', id);
+        if (error) throw error;
+      } catch (e: any) {
+        enqueueSync({ type: 'DELETE_ASSET', payload: id }); processSyncQueue();
+      }
+    } else {
+      enqueueSync({ type: 'DELETE_ASSET', payload: id }); processSyncQueue();
+    }
+
+    const localAssets = getLocalData<Asset[]>('ArtaQu_assets', DEFAULT_ASSETS);
+    setLocalData('ArtaQu_assets', localAssets.filter(a => a.id !== id));
+    return { success: true };
+  },
+
   async getDashboardData(): Promise<DashboardData> {
     const trxs = await this.getTransactions();
     const insts = await this.getInstallments();
+    const assets = await this.getAssets();
 
     let income = 0;
     let expense = 0;
     let receivable = 0; // Piutang yang masih belum lunas / aktif
     let paidInstallments = 0;
     let installmentOutstanding = 0; // Sisa cicilan yang belum dibayar
+    let totalAssetValue = 0;
+
+    assets.forEach(a => {
+      totalAssetValue += (a.quantity * a.current_price);
+    });
 
     trxs.forEach(t => {
       if (t.type === 'Pendapatan') {
@@ -626,6 +730,7 @@ export const apiService = {
       debt: installmentOutstanding, // Total Cicilan Aktif
       receivable,
       installmentOutstanding,
+      totalAssetValue,
     };
   },
 

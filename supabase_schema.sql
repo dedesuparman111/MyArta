@@ -135,3 +135,42 @@ CREATE POLICY "Users can delete their own savings goals"
   USING (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS savings_goals_user_id_idx ON public.savings_goals(user_id);
+
+-- 5. Create ASSETS Table
+CREATE TABLE IF NOT EXISTS public.assets (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+  name text NOT NULL,
+  type text NOT NULL CHECK (type in ('Kripto', 'Saham', 'Reksadana', 'Emas', 'Lainnya')),
+  platform text,
+  quantity numeric(20, 8) NOT NULL CHECK (quantity >= 0),
+  average_price numeric(15, 2) NOT NULL CHECK (average_price >= 0),
+  current_price numeric(15, 2) NOT NULL CHECK (current_price >= 0)
+);
+
+-- Enable Row Level Security for assets
+ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS Policies for assets
+DROP POLICY IF EXISTS "Users can view their own assets" ON public.assets;
+CREATE POLICY "Users can view their own assets"
+  ON public.assets FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their own assets" ON public.assets;
+CREATE POLICY "Users can insert their own assets"
+  ON public.assets FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own assets" ON public.assets;
+CREATE POLICY "Users can update their own assets"
+  ON public.assets FOR UPDATE
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own assets" ON public.assets;
+CREATE POLICY "Users can delete their own assets"
+  ON public.assets FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS assets_user_id_idx ON public.assets(user_id);

@@ -136,6 +136,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
             {formatRupiah(data.receivable)}
           </div>
         </div>
+
+        {/* Digital Assets */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/60 p-5 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+          <div className="flex items-center gap-2 text-emerald-500 dark:text-emerald-400 mb-2">
+            <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl flex items-center justify-center">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Aset Digital
+            </span>
+          </div>
+          <div className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+            {formatRupiah(data.totalAssetValue || 0)}
+          </div>
+        </div>
       </div>
 
       {/* Creditors Outstanding Balance List */}
