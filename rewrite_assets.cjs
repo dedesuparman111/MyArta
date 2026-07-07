@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+
+const content = `import React, { useState } from 'react';
 import { Asset } from '../types';
 import { apiService } from '../lib/supabase';
 import { Plus, Edit2, Trash2, TrendingUp, TrendingDown, Briefcase, Bitcoin, BarChart3, Coins, X, RefreshCw, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react';
@@ -172,7 +174,7 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
       for (const asset of cryptoAssets) {
         const symbol = asset.name.toUpperCase().replace(/[^A-Z]/g, '') + 'USDT';
         try {
-          const res = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+          const res = await fetch(\`https://api.binance.com/api/v3/ticker/price?symbol=\${symbol}\`);
           if (res.ok) {
             const data = await res.json();
             const priceInIdr = parseFloat(data.price) * usdToIdr;
@@ -184,7 +186,7 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
         }
       }
       if (updatedCount > 0) {
-        alert(`Berhasil memperbarui harga ${updatedCount} aset kripto dari Binance.`);
+        alert(\`Berhasil memperbarui harga \${updatedCount} aset kripto dari Binance.\`);
       } else {
         alert('Tidak ada aset kripto yang dapat diperbarui atau terjadi kesalahan jaringan.');
       }
@@ -213,7 +215,7 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
           disabled={isRefreshing}
           className="flex items-center gap-1.5 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors disabled:opacity-50"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={\`w-3.5 h-3.5 \${isRefreshing ? 'animate-spin' : ''}\`} />
           <span className="hidden sm:inline">Update Kripto</span>
         </button>
       </div>
@@ -226,7 +228,7 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
           <h3 className="text-3xl font-black text-white tracking-tight">{formatRupiah(totalValue)}</h3>
           
           <div className="mt-4 flex items-center gap-2">
-            <div className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${isGain ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+            <div className={\`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full \${isGain ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}\`}>
               {isGain ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               {isGain ? '+' : ''}{formatRupiah(totalGainLoss)}
             </div>
@@ -379,7 +381,7 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
                 </div>
                 <button
                   type="submit"
-                  className={`w-full py-3 text-white font-bold rounded-xl transition-colors ${transactionType === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}
+                  className={\`w-full py-3 text-white font-bold rounded-xl transition-colors \${transactionType === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}\`}
                 >
                   Konfirmasi {transactionType === 'deposit' ? 'Deposit' : 'Withdraw'}
                 </button>
@@ -412,12 +414,12 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
                 {/* Top Section: Icon & Info */}
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl ${getAssetColor(asset.type)}`}>
+                    <div className={\`p-3 rounded-xl \${getAssetColor(asset.type)}\`}>
                       {getAssetIcon(asset.type)}
                     </div>
                     <div>
                       <h3 className="font-bold text-slate-800 dark:text-slate-100 uppercase">{asset.name}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{asset.type} {asset.platform && `• ${asset.platform}`}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{asset.type} {asset.platform && \`• \${asset.platform}\`}</p>
                       <div className="text-[10px] font-mono text-slate-400 mt-1">
                         {asset.quantity} unit @ {formatRupiah(asset.current_price)}
                       </div>
@@ -428,7 +430,7 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
                     <div className="text-sm font-black text-slate-800 dark:text-slate-100">
                       {formatRupiah(val)}
                     </div>
-                    <div className={`text-xs font-bold flex items-center gap-1 ${isProfit ? 'text-emerald-500' : 'text-rose-500'}`}>
+                    <div className={\`text-xs font-bold flex items-center gap-1 \${isProfit ? 'text-emerald-500' : 'text-rose-500'}\`}>
                       {isProfit ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                       {isProfit ? '+' : ''}{pnlPercent.toFixed(2)}%
                     </div>
@@ -482,3 +484,6 @@ export const Assets: React.FC<AssetsProps> = ({ assets, onAddAsset, onUpdateAsse
     </div>
   );
 };
+`
+fs.writeFileSync('src/components/Assets.tsx', content);
+console.log("Done overwriting Assets.tsx");

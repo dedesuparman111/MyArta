@@ -58,6 +58,8 @@ export interface Asset {
   quantity: number;
   average_price: number;
   current_price: number;
+  total_deposit?: number;
+  total_withdraw?: number;
 }
 
 export interface SavingsGoal {
