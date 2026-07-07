@@ -199,6 +199,24 @@ export const apiService = {
     return null;
   },
 
+  async signInWithGoogle(): Promise<{ success: boolean; message: string }> {
+    if (supabase) {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: window.location.origin,
+          }
+        });
+        if (error) throw error;
+        return { success: true, message: 'Mengalihkan ke Google...' };
+      } catch (e: any) {
+        return { success: false, message: e.message || 'Gagal masuk dengan Google.' };
+      }
+    }
+    return { success: false, message: 'Database tidak terhubung.' };
+  },
+
   async signIn(email: string, password?: string): Promise<{ success: boolean; user: AppUser | null; message: string }> {
     if (supabase && password) {
       try {
