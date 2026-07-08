@@ -48,14 +48,17 @@ const DEFAULT_ASSETS: Asset[] = [];
 
 // Helper to get local data safely
 const getLocalData = <T>(key: string, defaultData: T): T => {
-  const data = localStorage.getItem(key);
-  if (!data) {
-    localStorage.setItem(key, JSON.stringify(defaultData));
-    return defaultData;
-  }
+  if (typeof window === 'undefined') return defaultData;
   try {
-    return JSON.parse(data) as T;
-  } catch {
+    const item = window.localStorage.getItem(key);
+    if (!item) return defaultData;
+    const parsed = JSON.parse(item);
+    if (Array.isArray(defaultData) && !Array.isArray(parsed)) {
+      return defaultData;
+    }
+    return parsed;
+  } catch (error) {
+    console.error('Error reading from localStorage', error);
     return defaultData;
   }
 };
@@ -70,7 +73,7 @@ const setLocalData = <T>(key: string, data: T): void => {
 // ==========================================
 interface SyncAction {
   id: string;
-  type: 'ADD_TRX' | 'UPDATE_TRX' | 'DELETE_TRX' | 'ADD_INST' | 'UPDATE_INST' | 'DELETE_INST' | 'ADD_GOAL' | 'UPDATE_GOAL' | 'DELETE_GOAL';
+  type: 'ADD_TRX' | 'UPDATE_TRX' | 'DELETE_TRX' | 'ADD_INST' | 'UPDATE_INST' | 'DELETE_INST' | 'ADD_GOAL' | 'UPDATE_GOAL' | 'DELETE_GOAL' | 'ADD_ASSET' | 'UPDATE_ASSET' | 'DELETE_ASSET';
   payload: any;
   timestamp: number;
 }
@@ -162,6 +165,63 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 export const apiService = {
+
+  async getAssetPlatforms(): Promise<any[]> {
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { data, error } = await supabase.from('asset_platforms').select('*').order('created_at', { ascending: false });
+        if (error) throw error;
+        setLocalData('ArtaQu_asset_platforms', data || []);
+        return data || [];
+      } catch (e) {
+        return getLocalData('ArtaQu_asset_platforms', []);
+      }
+    }
+    return getLocalData('ArtaQu_asset_platforms', []);
+  },
+
+  async addAssetPlatform(platform: any): Promise<{ success: boolean; data?: any; message?: string }> {
+    const newId = uuidv4();
+    const user = await this.getCurrentUser();
+    const newPlatform = { ...platform, id: newId, user_id: user?.id, created_at: new Date().toISOString() };
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { data, error } = await supabase.from('asset_platforms').insert([newPlatform]).select();
+        if (error) throw error;
+        return { success: true, data: data[0], message: 'Platform berhasil ditambahkan.' };
+      } catch (e) {
+        return { success: false, message: e.message || 'Gagal menambahkan platform.' };
+      }
+    }
+    return { success: false, message: 'Offline mode not fully supported for platforms yet.' };
+  },
+
+  async updateAssetPlatform(id: string, updates: any): Promise<{ success: boolean; data?: any; message?: string }> {
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { data, error } = await supabase.from('asset_platforms').update(updates).eq('id', id).select();
+        if (error) throw error;
+        return { success: true, data: data[0], message: 'Platform diperbarui.' };
+      } catch (e) {
+        return { success: false, message: e.message || 'Gagal memperbarui platform.' };
+      }
+    }
+    return { success: false, message: 'Offline mode not fully supported for platforms yet.' };
+  },
+
+  async deleteAssetPlatform(id: string): Promise<{ success: boolean; message?: string }> {
+    if (supabase && (typeof navigator === 'undefined' || navigator.onLine)) {
+      try {
+        const { error } = await supabase.from('asset_platforms').delete().eq('id', id);
+        if (error) throw error;
+        return { success: true, message: 'Platform dihapus.' };
+      } catch (e) {
+        return { success: false, message: e.message || 'Gagal menghapus platform.' };
+      }
+    }
+    return { success: false, message: 'Offline mode not fully supported for platforms yet.' };
+  },
+
   // --- AUTHENTICATION ---
   async getCurrentUser(): Promise<AppUser | null> {
     if (supabase) {
@@ -707,17 +767,17 @@ export const apiService = {
   async getDashboardData(): Promise<DashboardData> {
     const trxs = await this.getTransactions();
     const insts = await this.getInstallments();
-    const assets = await this.getAssets();
+    const platforms = await this.getAssetPlatforms();
 
     let income = 0;
     let expense = 0;
-    let receivable = 0; // Piutang yang masih belum lunas / aktif
+    let receivable = 0;
     let paidInstallments = 0;
-    let installmentOutstanding = 0; // Sisa cicilan yang belum dibayar
+    let installmentOutstanding = 0;
     let totalAssetValue = 0;
 
-    assets.forEach(a => {
-      totalAssetValue += (a.quantity * a.current_price);
+    platforms.forEach(p => {
+      totalAssetValue += (p.current_value || 0);
     });
 
     trxs.forEach(t => {

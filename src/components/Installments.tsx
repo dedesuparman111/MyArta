@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Installment } from '../types';
-import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers } from 'lucide-react';
+import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X } from 'lucide-react';
 
 interface InstallmentsProps {
   installments: Installment[];
@@ -40,6 +40,8 @@ export const Installments: React.FC<InstallmentsProps> = ({
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
+  const [receiptUrl, setReceiptUrl] = useState('');
+  const [viewReceipt, setViewReceipt] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Extract all unique creditors for filtering
@@ -71,6 +73,7 @@ export const Installments: React.FC<InstallmentsProps> = ({
     setStartDate(new Date().toISOString().split('T')[0]);
     setDueDate('');
     setDescription('');
+    setReceiptUrl('');
     setIsModalOpen(true);
   };
 
@@ -84,6 +87,7 @@ export const Installments: React.FC<InstallmentsProps> = ({
     setStartDate(inst.start_date);
     setDueDate(inst.due_date || '');
     setDescription(inst.description || '');
+    setReceiptUrl(inst.receipt_url || '');
     setIsModalOpen(true);
   };
 
@@ -113,6 +117,7 @@ export const Installments: React.FC<InstallmentsProps> = ({
         start_date: startDate,
         due_date: dueDate || null,
         description,
+        receipt_url: receiptUrl || null,
         status: parseFloat(paidAmount || '0') >= parseFloat(totalAmount) ? 'Lunas' : 'Berjalan',
       };
       success = await onEditInstallment(payload);
@@ -124,6 +129,7 @@ export const Installments: React.FC<InstallmentsProps> = ({
         start_date: startDate,
         due_date: dueDate || null,
         description,
+        receipt_url: receiptUrl || null,
       };
       success = await onAddInstallment(payload);
     }
@@ -132,6 +138,52 @@ export const Installments: React.FC<InstallmentsProps> = ({
     if (success) {
       setIsModalOpen(false);
     }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // File size check
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran file terlalu besar. Maksimal 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        // Resize if too large
+        const MAX_DIMENSION = 800;
+        if (width > height) {
+          if (width > MAX_DIMENSION) {
+            height *= MAX_DIMENSION / width;
+            width = MAX_DIMENSION;
+          }
+        } else {
+          if (height > MAX_DIMENSION) {
+            width *= MAX_DIMENSION / height;
+            height = MAX_DIMENSION;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Compress as JPEG
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        setReceiptUrl(compressedDataUrl);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -274,10 +326,19 @@ export const Installments: React.FC<InstallmentsProps> = ({
                         </td>
                         <td className="px-6 py-4.5 whitespace-nowrap text-center">
                           <div className="flex gap-2 justify-center">
+                            {inst.receipt_url && (
+                              <button
+                                onClick={() => setViewReceipt(inst.receipt_url!)}
+                                className="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer transition-colors"
+                                title="Lihat Bukti Bayar"
+                              >
+                                <FileText className="w-4 h-4" />
+                              </button>
+                            )}
                             <button
                               onClick={() => handleOpenEditModal(inst)}
                               className="p-2 text-primary hover:bg-primary-light dark:hover:bg-primary-light rounded-lg cursor-pointer transition-colors"
-                              title="Edit"
+                              title="Edit / Bayar"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
@@ -335,13 +396,29 @@ export const Installments: React.FC<InstallmentsProps> = ({
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
-                      <div className="text-[10px] text-slate-400">
-                        Mulai: {formatDate(inst.start_date)}
+                      <div className="text-[10px] text-slate-400 flex flex-col gap-0.5">
+                        <span>Mulai: {formatDate(inst.start_date)}</span>
+                        {inst.due_date && (
+                          <span className="text-rose-500 font-bold flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            Jatuh Tempo: {formatDate(inst.due_date)}
+                          </span>
+                        )}
                       </div>
                       <div className="flex gap-2">
+                        {inst.receipt_url && (
+                          <button
+                            onClick={() => setViewReceipt(inst.receipt_url!)}
+                            className="p-2 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg cursor-pointer"
+                            title="Lihat Bukti Bayar"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => handleOpenEditModal(inst)}
                           className="p-2 text-primary hover:bg-primary-light rounded-lg cursor-pointer"
+                          title="Edit / Bayar"
                         >
                           <Edit className="w-4 h-4" />
                         </button>
@@ -367,7 +444,7 @@ export const Installments: React.FC<InstallmentsProps> = ({
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-100 dark:border-slate-800 transition-all duration-300">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950">
               <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
-                {editingInstallment ? 'Edit Cicilan' : 'Tambah Cicilan Baru'}
+                {editingInstallment ? 'Edit / Bayar Cicilan' : 'Tambah Cicilan Baru'}
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -518,6 +595,37 @@ export const Installments: React.FC<InstallmentsProps> = ({
                 </div>
               </div>
 
+              {/* Receipt Upload */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wide">
+                  Foto Bukti Bayar (Opsional)
+                </label>
+                <div className="relative">
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center justify-center w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700">
+                      <Camera className="w-5 h-5 text-slate-500" />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                    <div className="flex-1">
+                      {receiptUrl ? (
+                        <div className="relative inline-block">
+                          <img src={receiptUrl} alt="Bukti" className="h-12 w-auto object-cover rounded-lg border border-slate-200 dark:border-slate-700" />
+                          <button 
+                            type="button"
+                            onClick={() => setReceiptUrl('')} 
+                            className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-0.5 shadow hover:bg-rose-600 transition"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400">Belum ada foto</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Actions Footer */}
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800/60">
                 <button
@@ -536,6 +644,23 @@ export const Installments: React.FC<InstallmentsProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Receipt Modal */}
+      {viewReceipt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl p-2 shadow-2xl relative">
+            <button 
+              onClick={() => setViewReceipt(null)} 
+              className="absolute -top-4 -right-4 bg-slate-800 text-white p-2 rounded-full hover:bg-slate-700 transition shadow-lg z-50"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center min-h-[300px]">
+              <img src={viewReceipt} alt="Bukti Bayar" className="max-w-full max-h-[80vh] object-contain" />
+            </div>
           </div>
         </div>
       )}

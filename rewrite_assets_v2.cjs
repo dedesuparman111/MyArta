@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+const fs = require('fs');
+
+const content = `import React, { useState } from 'react';
 import { Asset, AssetPlatform } from '../types';
 import { Plus, Edit2, Trash2, TrendingUp, TrendingDown, Briefcase, Bitcoin, BarChart3, Coins, X, ArrowDownToLine, ArrowUpFromLine, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -136,12 +138,8 @@ export const Assets: React.FC<AssetsProps> = ({
     }
   };
 
-  const safePlatforms = Array.isArray(platforms) ? platforms : [];
-  const safeAssets = Array.isArray(assets) ? assets : [];
-
-  const totalGlobalValue = safePlatforms.reduce((acc, p) => acc + Number(p.current_value || 0), 0);
-  const totalGlobalModal = safePlatforms.reduce((acc, p) => acc + (Number(p.total_deposit || 0) - Number(p.total_withdraw || 0)), 0);
-  
+  const totalGlobalValue = platforms.reduce((acc, p) => acc + (p.current_value || 0), 0);
+  const totalGlobalModal = platforms.reduce((acc, p) => acc + ((p.total_deposit || 0) - (p.total_withdraw || 0)), 0);
   const totalGlobalPnL = totalGlobalValue - totalGlobalModal;
   const isGlobalGain = totalGlobalPnL >= 0;
 
@@ -162,7 +160,7 @@ export const Assets: React.FC<AssetsProps> = ({
           <h3 className="text-3xl font-black text-white tracking-tight">{formatRupiah(totalGlobalValue)}</h3>
           
           <div className="mt-4 flex items-center gap-2">
-            <div className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${isGlobalGain ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+            <div className={\`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full \${isGlobalGain ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}\`}>
               {isGlobalGain ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
               {isGlobalGain ? '+' : ''}{formatRupiah(totalGlobalPnL)} PnL
             </div>
@@ -181,18 +179,18 @@ export const Assets: React.FC<AssetsProps> = ({
 
       {/* Platform List */}
       <div className="space-y-4">
-        {safePlatforms.length === 0 ? (
+        {platforms.length === 0 ? (
           <div className="p-8 text-center bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
             <p className="text-sm text-slate-500 dark:text-slate-400">Belum ada platform atau broker.</p>
           </div>
         ) : (
-          safePlatforms.map(p => {
+          platforms.map(p => {
             const netModal = (p.total_deposit || 0) - (p.total_withdraw || 0);
             const porto = p.current_value || 0;
             const pnl = porto - netModal;
             const isGain = pnl >= 0;
             const isExpanded = expandedPlatform === p.id;
-            const platformAssets = safeAssets.filter(a => a.platform_id === p.id);
+            const platformAssets = assets.filter(a => a.platform_id === p.id);
 
             return (
               <div key={p.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
@@ -253,7 +251,7 @@ export const Assets: React.FC<AssetsProps> = ({
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <div className={`text-xs font-bold flex items-center gap-1 ${isGain ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      <div className={\`text-xs font-bold flex items-center gap-1 \${isGain ? 'text-emerald-500' : 'text-rose-500'}\`}>
                         Profit/Loss: {isGain ? '+' : ''}{formatRupiah(pnl)}
                       </div>
                       <div className="w-px h-4 bg-slate-200 dark:bg-slate-700"></div>
@@ -292,7 +290,7 @@ export const Assets: React.FC<AssetsProps> = ({
                         platformAssets.map(a => (
                           <div key={a.id} className="flex justify-between items-center p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
                             <div className="flex items-center gap-3">
-                              <div className={`p-2 rounded-lg ${getAssetColor(a.type)}`}>
+                              <div className={\`p-2 rounded-lg \${getAssetColor(a.type)}\`}>
                                 {getAssetIcon(a.type)}
                               </div>
                               <div>
@@ -382,7 +380,7 @@ export const Assets: React.FC<AssetsProps> = ({
                   className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm dark:bg-slate-950 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
-              <button type="submit" className={`w-full py-3 text-white font-bold rounded-xl transition-colors ${dwType === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
+              <button type="submit" className={\`w-full py-3 text-white font-bold rounded-xl transition-colors \${dwType === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}\`}>
                 Konfirmasi {dwType === 'deposit' ? 'Deposit' : 'Withdraw'}
               </button>
             </form>
@@ -467,3 +465,6 @@ export const Assets: React.FC<AssetsProps> = ({
     </div>
   );
 };
+`
+fs.writeFileSync('src/components/Assets.tsx', content);
+console.log("Done overwriting Assets.tsx");

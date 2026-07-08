@@ -29,6 +29,7 @@ export interface Installment {
   start_date: string;
   due_date?: string | null;
   description: string;
+  receipt_url?: string | null;
   status: 'Lunas' | 'Berjalan';
 }
 
@@ -49,6 +50,7 @@ export interface DashboardData {
 }
 
 export interface Asset {
+  platform_id?: string;
   id: string;
   created_at?: string;
   user_id?: string;
@@ -72,4 +74,14 @@ export interface SavingsGoal {
   target_date?: string | null;
   description: string;
   status: 'Tercapai' | 'Berjalan';
+}
+
+export interface AssetPlatform {
+  id: string;
+  created_at?: string;
+  user_id?: string;
+  name: string;
+  total_deposit: number;
+  total_withdraw: number;
+  current_value: number;
 }

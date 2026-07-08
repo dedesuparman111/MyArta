@@ -38,6 +38,7 @@ export default function App() {
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [assetPlatforms, setAssetPlatforms] = useState<any[]>([]);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     balance: 0,
     income: 0,
@@ -136,18 +137,20 @@ export default function App() {
   // Load all user records from database
   const loadCoreData = async () => {
     try {
-      const [trxs, insts, dash, goals, asts] = await Promise.all([
+      const [trxs, insts, dash, goals, asts, plats] = await Promise.all([
         apiService.getTransactions(),
         apiService.getInstallments(),
         apiService.getDashboardData(),
         apiService.getSavingsGoals(),
         apiService.getAssets(),
+        apiService.getAssetPlatforms()
       ]);
       setTransactions(trxs);
       setInstallments(insts);
       setDashboardData(dash);
       setSavingsGoals(goals);
       setAssets(asts);
+      setAssetPlatforms(plats);
     } catch (e: any) {
       showToast('Koneksi Gagal', e.message || 'Gagal menyinkronkan data keuangan.', 'error');
     }
@@ -376,6 +379,26 @@ export default function App() {
       }
     }
     return true; // add return
+  };
+
+  
+  const handleAddPlatform = async (platform: any) => {
+    const res = await apiService.addAssetPlatform(platform);
+    if (res.success) await loadCoreData();
+    return res.success;
+  };
+  const handleUpdatePlatform = async (id: string, updates: any) => {
+    const res = await apiService.updateAssetPlatform(id, updates);
+    if (res.success) await loadCoreData();
+    return res.success;
+  };
+  const handleDeletePlatform = async (id: string) => {
+    if (window.confirm('Yakin hapus platform ini? Semua aset di dalamnya mungkin terpengaruh.')) {
+      const res = await apiService.deleteAssetPlatform(id);
+      if (res.success) await loadCoreData();
+      return res.success;
+    }
+    return false;
   };
 
   const handleAddAsset = async (asset: Omit<Asset, 'id'>) => {
@@ -617,12 +640,15 @@ export default function App() {
           )}
 
           {activeView === 'assets' && (
-            <Assets
-              assets={assets}
-              formatRupiah={formatRupiah}
-              onAddAsset={handleAddAsset}
-              onUpdateAsset={handleUpdateAsset}
-              onDeleteAsset={handleDeleteAsset}
+            <Assets 
+              assets={assets} 
+              platforms={assetPlatforms} 
+              onAddAsset={handleAddAsset} 
+              onUpdateAsset={handleUpdateAsset} 
+              onDeleteAsset={handleDeleteAsset} 
+              onAddPlatform={handleAddPlatform}
+              onUpdatePlatform={handleUpdatePlatform}
+              onDeletePlatform={handleDeletePlatform}
             />
           )}
 
