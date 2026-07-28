@@ -47,12 +47,14 @@ export const Auth: React.FC<AuthProps> = ({ onAuthSuccess }) => {
           return;
         }
         const res = await apiService.signUp(username, email, password);
-        if (res.success && res.user) {
-          if (res.message.includes('Cek email')) {
+        if (res.success) {
+          if (res.user) {
+            onAuthSuccess(res.user);
+          } else {
+            // Email confirmation required or no user returned
             setInfoMessage(res.message);
             setIsSignUp(false); // Switch to login waiting for confirmation
-          } else {
-            onAuthSuccess(res.user);
+            setPassword('');
           }
         } else {
           setError(res.message);

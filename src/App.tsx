@@ -187,11 +187,15 @@ export default function App() {
     if (supabase) {
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          if (event === 'SIGNED_IN' && session) {
+          if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session) {
             const currentUser = await apiService.getCurrentUser();
             if (currentUser && !user) {
               setUser(currentUser);
               await loadCoreData();
+            }
+            if (event === 'PASSWORD_RECOVERY') {
+              showToast('Reset Password', 'Silakan ubah password Anda di menu Pengaturan.', 'success');
+              setActiveView('settings');
             }
           } else if (event === 'SIGNED_OUT') {
             setUser(null);

@@ -346,7 +346,7 @@ export const apiService = {
              localStorage.setItem('ArtaQu_user', JSON.stringify(appUser));
              return { success: true, user: appUser, message: 'Pendaftaran berhasil!' };
           } else {
-             return { success: true, user: appUser, message: 'Pendaftaran berhasil! Cek email Anda untuk konfirmasi pendaftaran.' };
+             return { success: true, user: null, message: 'Pendaftaran berhasil! Cek email Anda untuk konfirmasi pendaftaran. (Atau matikan Confirm Email di Supabase)' };
           }
         }
       } catch (e: any) {
