@@ -750,6 +750,19 @@ export default function App() {
             </span>
           </button>
 
+          {/* Center Add Button */}
+          <div className="flex-1 flex justify-center items-center h-full relative">
+            <button
+              onClick={() => {
+                setActiveView('transactions');
+                setShowGlobalAdd(true);
+              }}
+              className="absolute -top-3 w-[45px] h-[45px] bg-gradient-to-tr from-primary to-indigo-600 hover:from-primary-hover hover:to-indigo-700 text-white rounded-full shadow-lg hover:shadow-primary/40 transition-all active:scale-95 flex items-center justify-center group z-50 border-4 border-white dark:border-slate-900"
+            >
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" strokeWidth={3} />
+            </button>
+          </div>
+
           {/* Target */}
           <button
             onClick={() => setActiveView('savings')}
@@ -801,17 +814,6 @@ export default function App() {
             </span>
           </button>
         </div>
-
-      {/* Moved Absolute FAB on Mobile to right corner */}
-      <button
-        onClick={() => {
-          setActiveView('transactions');
-          setShowGlobalAdd(true);
-        }}
-        className="sm:hidden fixed bottom-[90px] right-4 bg-gradient-to-tr from-primary to-indigo-600 hover:from-primary-hover hover:to-indigo-700 text-white p-4 rounded-full shadow-lg hover:shadow-primary/40 transition-all active:scale-95 z-50 flex items-center justify-center group"
-      >
-        <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform" strokeWidth={3} />
-      </button>
       </nav>
     </div>
   );

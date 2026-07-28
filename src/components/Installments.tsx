@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Installment } from '../types';
-import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X } from 'lucide-react';
+import { Plus, Filter, Edit, Trash2, Calendar, FileText, CheckCircle2, Clock, Landmark, Layers, Camera, Upload, X, Search } from 'lucide-react';
 
 interface InstallmentsProps {
   installments: Installment[];
@@ -44,13 +44,19 @@ export const Installments: React.FC<InstallmentsProps> = ({
   const [viewReceipt, setViewReceipt] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Extract all unique creditors for filtering
   const uniqueCreditors = Array.from(new Set(installments.map((i) => i.creditor).filter(Boolean)));
 
   // Filter installments
-  const filteredInstallments = filterCreditor === 'all'
-    ? installments
-    : installments.filter((i) => i.creditor === filterCreditor);
+  const filteredInstallments = installments.filter((i) => {
+    const matchCreditor = filterCreditor === 'all' || i.creditor === filterCreditor;
+    const matchSearch = i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        i.creditor.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCreditor && matchSearch;
+  });
 
   // Calculate recap summaries
   let sumTotal = 0;
@@ -196,6 +202,18 @@ export const Installments: React.FC<InstallmentsProps> = ({
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+          {/* Search Filter */}
+          <div className="relative flex-1 sm:flex-none sm:w-56">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari Barang/Keperluan..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none font-semibold text-slate-700 dark:text-slate-300 shadow-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-400 placeholder:font-normal"
+            />
+          </div>
+
           {/* Creditor Filter */}
           <div className="relative flex-1 sm:flex-none sm:w-56">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
