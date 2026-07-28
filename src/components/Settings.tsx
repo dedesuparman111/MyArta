@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Settings as SettingsIcon, Sun, Moon, Palette, Database, Trash2, ShieldCheck, HelpCircle, Terminal } from 'lucide-react';
-import { isSupabaseConfigured } from '../lib/supabase';
+import { Settings as SettingsIcon, Sun, Moon, Palette, Database, Trash2, ShieldCheck, HelpCircle, Terminal, KeyRound } from 'lucide-react';
+import { isSupabaseConfigured, apiService } from '../lib/supabase';
 
 interface SettingsProps {
   theme: 'light' | 'dark';
@@ -27,6 +27,10 @@ export const Settings: React.FC<SettingsProps> = ({
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   const colors = [
     { name: 'blue', value: '#2563eb', label: 'Classic Blue' },
     { name: 'orange', value: '#f97316', label: 'Neon Orange' },
@@ -47,6 +51,24 @@ export const Settings: React.FC<SettingsProps> = ({
     } else {
       setPinError(true);
     }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordMessage({ type: 'error', text: 'Password minimal 6 karakter.' });
+      return;
+    }
+    setIsUpdatingPassword(true);
+    setPasswordMessage(null);
+    const res = await apiService.updatePassword(newPassword);
+    if (res.success) {
+      setPasswordMessage({ type: 'success', text: res.message });
+      setNewPassword('');
+    } else {
+      setPasswordMessage({ type: 'error', text: res.message });
+    }
+    setIsUpdatingPassword(false);
   };
 
   return (
@@ -118,6 +140,43 @@ export const Settings: React.FC<SettingsProps> = ({
           ))}
         </div>
       </div>
+
+      {isSupabaseConfigured && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-6 rounded-2xl shadow-sm">
+          <h3 className="font-bold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-2 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span>Keamanan Akun</span>
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 leading-relaxed font-medium">
+            Perbarui password akun Anda jika Anda login menggunakan email dan password.
+          </p>
+          <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-sm">
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="password"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Password Baru (min. 6 karakter)"
+                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 dark:border-slate-800 rounded-xl outline-none text-sm dark:bg-slate-950 dark:text-slate-200 focus:ring-2 focus:ring-primary/20 focus:border-primary font-semibold"
+              />
+            </div>
+            {passwordMessage && (
+              <p className={`text-[10px] font-semibold mt-1 ${passwordMessage.type === 'error' ? 'text-rose-500' : 'text-emerald-500'}`}>
+                {passwordMessage.type === 'error' ? '❌' : '✓'} {passwordMessage.text}
+              </p>
+            )}
+            <button
+              type="submit"
+              disabled={isUpdatingPassword}
+              className="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs transition hover:bg-primary-hover disabled:opacity-50"
+            >
+              {isUpdatingPassword ? 'Menyimpan...' : 'Perbarui Password'}
+            </button>
+          </form>
+        </div>
+      )}
 
       {/* Danger Zone / Reset Database */}
       <div className="bg-white dark:bg-slate-900 border border-rose-100 dark:border-red-950/30 p-6 rounded-2xl shadow-sm">

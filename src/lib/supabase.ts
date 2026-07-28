@@ -388,6 +388,19 @@ export const apiService = {
     return { success: false, message: 'Fitur reset password hanya tersedia apabila Supabase sudah terkonfigurasi.' };
   },
 
+  async updatePassword(password: string): Promise<{ success: boolean; message: string }> {
+    if (supabase) {
+      try {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
+        return { success: true, message: 'Password berhasil diubah!' };
+      } catch (e: any) {
+        return { success: false, message: e.message || 'Gagal mengubah password.' };
+      }
+    }
+    return { success: false, message: 'Fitur ubah password hanya tersedia apabila Supabase sudah terkonfigurasi.' };
+  },
+
   async signOut(): Promise<void> {
     if (supabase) {
       await supabase.auth.signOut();
