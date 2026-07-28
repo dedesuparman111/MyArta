@@ -334,15 +334,15 @@ export const Assets: React.FC<AssetsProps> = ({
 
       {/* MODALS */}
       {showPlatformForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative flex flex-col max-h-[90vh]">
             <button onClick={() => setShowPlatformForm(false)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100">
+            <h3 className="text-lg font-bold mb-4 text-slate-800 dark:text-slate-100 shrink-0">
               {editingPlatform ? 'Edit Platform' : 'Tambah Platform'}
             </h3>
-            <form onSubmit={handleSavePlatform} className="space-y-4">
+            <form onSubmit={handleSavePlatform} className="space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">Nama Platform / Broker</label>
                 <input
@@ -353,7 +353,7 @@ export const Assets: React.FC<AssetsProps> = ({
                   className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm dark:bg-slate-950 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
-              <button type="submit" className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors">
+              <button type="submit" className="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-hover transition-colors shrink-0 mt-4">
                 Simpan
               </button>
             </form>
@@ -362,17 +362,19 @@ export const Assets: React.FC<AssetsProps> = ({
       )}
 
       {showDWForm && dwPlatform && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative flex flex-col max-h-[90vh]">
             <button onClick={() => setShowDWForm(false)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              {dwType === 'deposit' ? <ArrowDownToLine className="w-5 h-5 text-emerald-500"/> : <ArrowUpFromLine className="w-5 h-5 text-rose-500"/>}
-              {dwType === 'deposit' ? 'Deposit' : 'Withdraw'}
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">Platform: {dwPlatform.name}</p>
-            <form onSubmit={handleDWSubmit} className="space-y-4">
+            <div className="shrink-0">
+              <h3 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                {dwType === 'deposit' ? <ArrowDownToLine className="w-5 h-5 text-emerald-500"/> : <ArrowUpFromLine className="w-5 h-5 text-rose-500"/>}
+                {dwType === 'deposit' ? 'Deposit' : 'Withdraw'}
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">Platform: {dwPlatform.name}</p>
+            </div>
+            <form onSubmit={handleDWSubmit} className="space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">Jumlah (IDR)</label>
                 <input
@@ -382,7 +384,7 @@ export const Assets: React.FC<AssetsProps> = ({
                   className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm dark:bg-slate-950 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
-              <button type="submit" className={`w-full py-3 text-white font-bold rounded-xl transition-colors ${dwType === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
+              <button type="submit" className={`w-full py-3 text-white font-bold rounded-xl transition-colors mt-4 shrink-0 ${dwType === 'deposit' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
                 Konfirmasi {dwType === 'deposit' ? 'Deposit' : 'Withdraw'}
               </button>
             </form>
@@ -391,14 +393,16 @@ export const Assets: React.FC<AssetsProps> = ({
       )}
 
       {showPortoForm && portoPlatform && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative">
+        <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative flex flex-col max-h-[90vh]">
             <button onClick={() => setShowPortoForm(false)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
               <X className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Update Nilai Portofolio</h3>
-            <p className="text-xs text-slate-500 mb-4">Platform: {portoPlatform.name}</p>
-            <form onSubmit={handlePortoSubmit} className="space-y-4">
+            <div className="shrink-0">
+              <h3 className="text-lg font-bold mb-1 text-slate-800 dark:text-slate-100">Update Nilai Portofolio</h3>
+              <p className="text-xs text-slate-500 mb-4">Platform: {portoPlatform.name}</p>
+            </div>
+            <form onSubmit={handlePortoSubmit} className="space-y-4 overflow-y-auto">
               <div>
                 <label className="block text-xs font-semibold text-slate-500 mb-1">Total Nilai Saat Ini (IDR)</label>
                 <input
@@ -408,7 +412,7 @@ export const Assets: React.FC<AssetsProps> = ({
                   className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-sm dark:bg-slate-950 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
-              <button type="submit" className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors">
+              <button type="submit" className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-colors shrink-0 mt-4">
                 Simpan Nilai
               </button>
             </form>
@@ -417,7 +421,7 @@ export const Assets: React.FC<AssetsProps> = ({
       )}
 
       {showAssetForm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+        <div className="fixed inset-0 z-[60] flex items-start sm:items-center justify-center p-4 pt-10 sm:pt-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl p-6 shadow-2xl relative">
             <button onClick={() => setShowAssetForm(false)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
               <X className="w-5 h-5" />
