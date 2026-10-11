@@ -1,3 +1,10 @@
+name: Supabase Keepalive
+
+on:
+  schedule:
+    - cron: '0 0 */5 * *'
+  workflow_dispatch:
+
 jobs:
   keepalive:
     runs-on: ubuntu-latest
